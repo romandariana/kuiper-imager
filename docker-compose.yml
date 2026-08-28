@@ -1,0 +1,30 @@
+# Development environment for Kuiper Imager 2.
+#
+#   docker compose build            # build the dev image
+#   docker compose run --rm dev     # get a dev shell in /workspace
+#
+# Inside the shell:
+#   cmake --preset dev && cmake --build build
+#   ./build/src/cli/kli list-devices
+#   ./build/src/gui/kuiper-imager   # needs X11 (see below)
+#
+# GUI over X11 (Linux/WSLg): run `xhost +local:` on the host once per session so
+# the container can reach your display. The mounts/env below wire it up.
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: kuiper-imager-dev
+    # Run as the host user so files created in the mount aren't owned by root.
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-xcb}
+    # Keep an interactive shell available for `docker compose run`.
+    stdin_open: true
+    tty: true
