@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libglib2.0-0 \
         libarchive-dev \
         libssl-dev \
+        libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Qt 6.8 via aqtinstall — same tool CI uses (jurplel/install-qt-action wraps it),
