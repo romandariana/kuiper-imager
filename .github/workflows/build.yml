@@ -94,3 +94,62 @@ jobs:
             build-ci/src/gui/kuiper-imager
           if-no-files-found: error
           retention-days: 14
+
+  # Native Debian package (.deb) for the CLI. Separate from `build` on purpose:
+  # the .deb must link the DISTRO's Qt (declared as a dependency and resolved at
+  # install time), NOT aqtinstall's Qt 6.8 — Qt's ABI compatibility is one-way, so
+  # a 6.8-built binary may fail to load on a distro's 6.4. Built inside a debian:12
+  # container (GCC 12 for std::expected; Qt 6.4.2; glibc 2.36) so the package runs
+  # on Debian 12, Ubuntu 24.04, and everything newer. See plan.md §9.
+  package-deb:
+    name: package (deb)
+    runs-on: ubuntu-24.04
+    container: debian:12
+    steps:
+      - uses: actions/checkout@v7
+
+      # Build against the distro Qt (qt6-base-dev = Qt 6.4.2) instead of aqt.
+      # dpkg-dev provides dpkg-shlibdeps (CPACK_DEBIAN_PACKAGE_SHLIBDEPS); lintian
+      # checks the resulting package. Keep the C-lib list in sync with the Linux
+      # build job above and docker/Dockerfile.
+      - name: Install build + packaging dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            ninja-build \
+            git \
+            ca-certificates \
+            qt6-base-dev \
+            libarchive-dev \
+            libssl-dev \
+            libcurl4-openssl-dev \
+            dpkg-dev \
+            lintian
+
+      - name: Configure
+        run: cmake --preset deb-linux
+
+      - name: Build
+        run: cmake --build --preset deb-linux
+
+      - name: Smoke test (kli version)
+        run: ./build-deb/src/cli/kli version
+
+      - name: Package (cpack -G DEB)
+        working-directory: build-deb
+        run: cpack -G DEB
+
+      # Informational for now (|| true): triage warnings on the first green run,
+      # then drop the `|| true` to make lintian a hard gate.
+      - name: Lint package (lintian)
+        run: lintian build-deb/*.deb || true
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v7
+        with:
+          name: kuiper-imager-cli-deb
+          path: build-deb/*.deb
+          if-no-files-found: error
+          retention-days: 14
