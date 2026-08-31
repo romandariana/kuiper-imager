@@ -1,4 +1,7 @@
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
+# Qt floor is 6.4 (Ubuntu 24.04 / Debian 12 ship 6.4.2) so the .deb can build
+# against the distro Qt. Dev/CI still use aqt 6.8. std::expected comes from
+# GCC/libstdc++, not Qt, so lowering the Qt floor is safe. See plan.md §9.
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core)
 find_package(LibArchive REQUIRED)
 find_package(OpenSSL REQUIRED)  # libcrypto for hardware-accelerated SHA-256
 find_package(CURL REQUIRED)     # libcurl: JSON API GETs for list-releases
