@@ -6,6 +6,17 @@ Kuiper Linux images for Analog Devices hardware. CLI-first, GUI on top.
 > Early development. This branch (`v2.0`) is a ground-up rewrite and will become
 > `main` when ready to ship. See the architecture plan for the full design.
 
+## Documentation
+
+The docs (design, workflows, and CLI reference) live in [`docs/`](docs/) and are
+built with Sphinx:
+
+```sh
+cd docs
+pip install -r requirements.txt
+make html          # output in docs/_build/html
+```
+
 ## Layout
 
 ```
